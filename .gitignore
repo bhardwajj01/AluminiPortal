@@ -1,0 +1,6 @@
+accounts/migrations/*
+accounts/__pycache__/*
+project1/__pycache__/*
+db.sqlite3
+db.log
+media/*
