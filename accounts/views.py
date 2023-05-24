@@ -26,8 +26,8 @@ class LoginViewSet(ViewSet):
         password=request.data.get('password')
         # username,password = (base64.b64decode(username).decode("ascii"), base64.b64decode(password).decode("ascii"))
 
-        username= base64.b64decode(username).decode("ascii") #'utf-8'
-        password= base64.b64decode(password).decode("ascii") #'utf-8'
+        # username= base64.b64decode(username).decode("ascii") #'utf-8'
+        # password= base64.b64decode(password).decode("ascii") #'utf-8'
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -418,37 +418,37 @@ class SearchJobViewSet(ModelViewSet):
         }
         return Response(data)
 
-import linkedin
+# import linkedin
 
-class LinkedinViewSet(ViewSet):
-    def create(request):
-        # Set up LinkedIn API credentials
-        linkedin_access_token = "YOUR_ACCESS_TOKEN"
-        linkedin_secret_key = "YOUR_SECRET_KEY"
-        linkedin_user_token = "USER_TOKEN"
+# class LinkedinViewSet(ViewSet):
+#     def create(request):
+#         # Set up LinkedIn API credentials
+#         linkedin_access_token = "YOUR_ACCESS_TOKEN"
+#         linkedin_secret_key = "YOUR_SECRET_KEY"
+#         linkedin_user_token = "USER_TOKEN"
 
-        # Initialize the LinkedIn API client
-        authentication = linkedin.LinkedInAuthentication(
-            linkedin_access_token,
-            linkedin_secret_key,
-            linkedin_user_token,
-            permissions=['r_liteprofile', 'r_emailaddress']
-        )
-        linkedin_client = linkedin.LinkedInApplication(authentication)
+#         # Initialize the LinkedIn API client
+#         authentication = linkedin.LinkedInAuthentication(
+#             linkedin_access_token,
+#             linkedin_secret_key,
+#             linkedin_user_token,
+#             permissions=['r_liteprofile', 'r_emailaddress']
+#         )
+#         linkedin_client = linkedin.LinkedInApplication(authentication)
 
-        # Fetch user data from LinkedIn
-        profile = linkedin_client.get_profile(selectors=['id', 'first-name', 'last-name', 'email-address',])
+#         # Fetch user data from LinkedIn
+#         profile = linkedin_client.get_profile(selectors=['id', 'first-name', 'last-name', 'email-address',])
 
-        # Process the profile data
-        user_id = profile['id']
-        first_name = profile['firstName']
-        last_name = profile['lastName']
-        email_address = profile['emailAddress']
+#         # Process the profile data
+#         user_id = profile['id']
+#         first_name = profile['firstName']
+#         last_name = profile['lastName']
+#         email_address = profile['emailAddress']
 
-        # Do something with the user data
-        # ...
+#         # Do something with the user data
+#         # ...
 
-        return Response("LinkedIn data fetched successfully.")
+#         return Response("LinkedIn data fetched successfully.")
 
 
    

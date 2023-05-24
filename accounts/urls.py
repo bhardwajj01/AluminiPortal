@@ -12,4 +12,4 @@ router.register('forgetpassword',ResetPasswordEmailViewSet,basename="forgetpassw
 router.register('search',SearchViewSet,basename="search")
 router.register('createjob',CreateJobViewSet,basename="createjob")
 router.register('searchjob',SearchJobViewSet,basename="searchjob")
-router.register('Linkedin',LinkedinViewSet,basename="Linkedin")
+# router.register('Linkedin',LinkedinViewSet,basename="Linkedin")
