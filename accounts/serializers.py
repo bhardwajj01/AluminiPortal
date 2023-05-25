@@ -88,4 +88,18 @@ class SentRestEmailPasswordSerializer(serializers.Serializer):
     # def to_representation(self, instance):
     #     return {'detail': f'Password reset email sent to {self.user_type}.'}
     
-                                                                         
+
+class GallerySerializer(serializers.ModelSerializer):
+    # posted_by = UserSerializer(read_only=True)
+    class Meta:
+        model = Gallery
+        fields = ['id', 'posted_by', 'image'] 
+         
+class EventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Event
+        fields = ['id', 'created_by', 'title', 'description', 'category', 'start_time', 'end_time', 'location', 'posted_date']
+
+
+
+                                                                        

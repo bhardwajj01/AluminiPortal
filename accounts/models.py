@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 class Teacher(models.Model):
     user=models.ForeignKey(User,on_delete=models.DO_NOTHING)
     name=models.CharField(max_length=100)
-    age=models.IntegerField(null=True,blank=True)
+    age=models.DateField(null=True, blank=True)
     role=models.CharField(max_length=50)
     profile_image=models.ImageField(upload_to="profile",null=True,blank=True,max_length=200)
     email=models.EmailField(unique=True)
@@ -42,7 +42,7 @@ class Student(models.Model):
     registeration_no=models.AutoField(primary_key=True)                 
     name=models.CharField(max_length=100)
     father_name=models.CharField(max_length=100,blank=True,null=True) 
-    age=models.IntegerField(null=True,blank=True)
+    age=models.DateField(null=True, blank=True)
     gender = models.CharField(max_length=10,null=True,blank=True)
     about=models.TextField(max_length=500,blank=True,null=True)
     profile_image=models.ImageField(upload_to="profile",null=True,blank=True,max_length=200)
@@ -73,7 +73,17 @@ class Job(models.Model):
     posted_date = models.DateField(auto_now_add=True)
     
 
-# class LinkedInUser(models.Model):
-#     user=models.ForeignKey(User,on_delete=models.DO_NOTHING)
-#     linkedin_id=models.CharField(max_length=50,blank=True,null=True)
+class Gallery(models.Model):
+    posted_by=models.ForeignKey(User,on_delete=models.DO_NOTHING)
+    image = models.ImageField(upload_to='gallery_images/',default="",null=True,blank=True)
 
+class Event(models.Model):
+    created_by =models.ForeignKey(Teacher,on_delete=models.DO_NOTHING) 
+    title = models.CharField(max_length=100)
+    description = models.TextField(max_length=500)
+    category=models.CharField(max_length=100)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    location = models.CharField(max_length=100)
+    posted_date = models.DateField(auto_now_add=True)
+    
