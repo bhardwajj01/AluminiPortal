@@ -39,7 +39,7 @@ class Teacher(models.Model):
 class Student(models.Model):
     user=models.ForeignKey(User,on_delete=models.DO_NOTHING)
     teacher=models.ForeignKey(Teacher,on_delete=models.DO_NOTHING)
-    registeration_no=models.AutoField(primary_key=True)                 
+    registeration_no=models.CharField(max_length=20,primary_key=True)                 
     name=models.CharField(max_length=100)
     father_name=models.CharField(max_length=100,blank=True,null=True) 
     age=models.DateField(null=True, blank=True)
@@ -67,6 +67,8 @@ class Job(models.Model):
     created_by=models.ForeignKey(User,on_delete=models.DO_NOTHING)
     title = models.CharField(max_length=255)
     description = models.TextField(max_length=500)
+    contact_email=models.EmailField(max_length=100,null=True,blank=True)
+    contact_mobile=models.CharField(max_length=50,null=True,blank=True)
     company = models.CharField(max_length=255)
     location = models.CharField(max_length=255)
     salary = models.DecimalField(max_digits=10, decimal_places=2)
@@ -87,3 +89,10 @@ class Event(models.Model):
     location = models.CharField(max_length=100)
     posted_date = models.DateField(auto_now_add=True)
     
+
+class Chat(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sender')
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='receiver')
+    message = models.CharField(max_length=1200)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)

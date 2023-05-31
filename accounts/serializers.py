@@ -22,7 +22,7 @@ class StudentSerializer(serializers.ModelSerializer):
 class JobSerializer(serializers.ModelSerializer):
     class Meta:
         model=Job
-        fields='__all__'
+        fields = ['title', 'description', 'company', 'salary','location','posted_date','contact_email','contact_mobile']
 
 class UserChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
@@ -101,5 +101,13 @@ class EventSerializer(serializers.ModelSerializer):
         fields = ['id', 'created_by', 'title', 'description', 'category', 'start_time', 'end_time', 'location', 'posted_date']
 
 
+
+class ChatSerializer(serializers.ModelSerializer):
+    # sender = serializers.SlugRelatedField(many=False, slug_field='username', queryset=User.objects.all())
+    # receiver = serializers.SlugRelatedField(many=False, slug_field='username', queryset=User.objects.all())
+
+    class Meta:
+        model = Chat
+        fields = ['id','sender', 'receiver', 'message', 'timestamp']
 
                                                                         

@@ -14,6 +14,8 @@ from rest_framework.response import Response
 from django.core.mail import send_mail,EmailMessage
 import base64
 from django.conf import settings
+from rest_framework.exceptions import PermissionDenied
+
 
 
 
@@ -117,8 +119,8 @@ class TeacherViewSet(ViewSet):
             print(e)
             return Response({"status":False,"message":"User not found!"})
         
-        username=request.data.get('username')
-        password=request.data.get('password') 
+        # username=request.data.get('username')
+        # password=request.data.get('password') 
         data={
                 'username':username,
                 'password':password,
@@ -379,24 +381,30 @@ class CreateJobViewSet(ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     queryset = Job.objects.all()
     serializer_class=JobSerializer
-    
-    def create(self,request):
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
+    def create(self, request):
+        user_id = request.user.id
+        print(user_id)
+        try:
+            user = User.objects.get(id=user_id) 
+            print(user)
+            serializer = self.get_serializer(instance=request.user, data=request.data)
+            serializer.is_valid(raise_exception=True)
             serializer.save()
-            data={
+
+            data = {
                 'status': True,
                 'data': serializer.data,
-                'message':'Job created successfully'                
+                "created_by": user.username,
+                'message': 'Job created successfully'
             }
             return Response(data)
-        else:
-            data={
-                'status':False,
-                'message':'Job  not created '                
+        except User.DoesNotExist:
+            data = {
+                'status': False,
+                'message': 'Job not created',
             }
             return Response(data)
-            
+ 
 
 class SearchJobViewSet(ModelViewSet): 
     authentication_classes = []
@@ -433,14 +441,14 @@ class EventViewSet(ModelViewSet):
     def create(self, request):
         user_id = request.user.id
         try:
-            teacher = Teacher.objects.get(user=user_id)
-            teacher_id = teacher.id 
-            serializer = self.get_serializer(data=request.data)
+            teacher = Teacher.objects.get(id=user_id) 
+            serializer = self.get_serializer(instance=request.user,data=request.data)
             serializer.is_valid(raise_exception=True)
-            serializer.save(created_by_id=teacher_id)
+            serializer.save()
             data = {
                 'status': True,
                 'data': serializer.data,
+                "created_by": teacher.user.username,
                 'message': 'Event created successfully'
             }
             return Response(data)
@@ -451,10 +459,37 @@ class EventViewSet(ModelViewSet):
             }
             return Response(data)
         
+class ChatViewSet(ModelViewSet):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = Chat.objects.all()
+    serializer_class = ChatSerializer
 
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    
-    
+    def list(self, request):
+        sender = request.query_params.get('sender')
+        receiver = request.query_params.get('receiver')   
+        queryset = self.filter_queryset(self.get_queryset())
+
+        if sender is not None and receiver is not None:
+            if str(request.user.id) != receiver:
+                raise PermissionDenied("You are not allowed to access these messages.")
+
+            messages = queryset.filter(sender_id=sender, receiver_id=receiver, is_read=False)
+            for message in messages:
+                message.is_read = True
+                message.save()
+            serializer = self.get_serializer(messages, many=True)
+        else:
+            serializer = self.get_serializer(queryset, many=True)
+
+        return Response(serializer.data)
+
    
 # class LogoutViewSet(ViewSet):
 #     authentication_classes = [JWTAuthentication]
