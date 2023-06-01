@@ -22,8 +22,8 @@ class StudentSerializer(serializers.ModelSerializer):
 class JobSerializer(serializers.ModelSerializer):
     class Meta:
         model=Job
-        fields = ['title', 'description', 'company', 'salary','location','posted_date','contact_email','contact_mobile']
-
+        fields = ['id',"created_by",'title', 'description', 'company', 'salary','location','posted_date','contact_email','contact_mobile']
+        # fields="__all__"
 class UserChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)

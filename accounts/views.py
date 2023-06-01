@@ -28,8 +28,8 @@ class LoginViewSet(ViewSet):
         password=request.data.get('password')
         # username,password = (base64.b64decode(username).decode("ascii"), base64.b64decode(password).decode("ascii"))
  
-        username= base64.b64decode(username).decode("ascii") #'utf-8'
-        password= base64.b64decode(password).decode("ascii") #'utf-8'
+        # username= base64.b64decode(username).decode("ascii") #'utf-8'
+        # password= base64.b64decode(password).decode("ascii") #'utf-8'
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -379,52 +379,72 @@ class SearchViewSet(ViewSet):
 class CreateJobViewSet(ModelViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
-    queryset = Job.objects.all()
-    serializer_class=JobSerializer
-    def create(self, request):
-        user_id = request.user.id
-        print(user_id)
-        try:
-            user = User.objects.get(id=user_id) 
-            print(user)
-            serializer = self.get_serializer(instance=request.user, data=request.data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-
-            data = {
-                'status': True,
-                'data': serializer.data,
-                "created_by": user.username,
-                'message': 'Job created successfully'
-            }
-            return Response(data)
-        except User.DoesNotExist:
-            data = {
-                'status': False,
-                'message': 'Job not created',
-            }
-            return Response(data)
- 
-
-class SearchJobViewSet(ModelViewSet): 
-    authentication_classes = []
-    permission_classes = []
-    queryset = Job.objects.all()
     serializer_class = JobSerializer
+    queryset = Job.objects.all()
     filter_backends = [filters.SearchFilter]
     search_fields = ['title', 'description', 'company', 'location']
 
+    serializer_class=JobSerializer
+    
     def list(self, request, *args, **kwargs):
         queryset=Job.objects.all() 
         queryset=self.filter_queryset(queryset)
         serializers=JobSerializer(queryset,many=True)
-        # serializers=self.get_serializer(queryset,many=True)
         data=serializers.data
         data={
             'status':True,
             'data':data,
         }
         return Response(data)
+    
+    def create(self, request):
+        data=request.data.copy()
+        new_data={}
+        for key,value in data.items():
+            new_data[key]=value
+ 
+        user_id=request.user.id
+        data['created_by']=user_id
+
+        serializer=JobSerializer(data=data)
+
+        if serializer.is_valid():
+            serializer.save()
+            data = {
+                'status': True,
+                'data': serializer.data,
+                'created_by': request.user.username,
+                'message': 'Job created successfully'
+            }
+            return Response(data)
+        else:
+            data = {
+                'status': False,
+                'message': 'Job not created',
+            }
+            return Response(data)
+
+ 
+
+# class SearchJobViewSet(ModelViewSet): 
+#     authentication_classes = []
+#     permission_classes = []
+#     queryset = Job.objects.all()
+#     serializer_class = JobSerializer
+#     filter_backends = [filters.SearchFilter]
+#     search_fields = ['title', 'description', 'company', 'location']
+
+#     def list(self, request, *args, **kwargs):
+#         queryset=Job.objects.all() 
+#         queryset=self.filter_queryset(queryset)
+#         serializers=JobSerializer(queryset,many=True)
+#         # serializers=self.get_serializer(queryset,many=True)
+#         data=serializers.data
+#         data={
+#             'status':True,
+#             'data':data,
+#         }
+#         return Response(data)
 
 
 class GalleryViewSet(ModelViewSet):
@@ -439,25 +459,30 @@ class EventViewSet(ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
     def create(self, request):
-        user_id = request.user.id
-        try:
-            teacher = Teacher.objects.get(id=user_id) 
-            serializer = self.get_serializer(instance=request.user,data=request.data)
-            serializer.is_valid(raise_exception=True)
+        data=request.data.copy()
+        new_data={}
+        for key,value in data.items():
+            new_data[key]=value
+        user_id=request.user.id
+        teacher = Teacher.objects.get(id=user_id) 
+        data['created_by']=teacher
+        serializer=EventSerializer(data=data)
+        if serializer.is_valid():
             serializer.save()
             data = {
                 'status': True,
                 'data': serializer.data,
-                "created_by": teacher.user.username,
+                'created_by': request.user.username,
                 'message': 'Event created successfully'
             }
             return Response(data)
-        except Teacher.DoesNotExist:
+        else:
             data = {
                 'status': False,
                 'message': 'You are not authorized to access this resource',
             }
             return Response(data)
+
         
 class ChatViewSet(ModelViewSet):
     authentication_classes = [JWTAuthentication]
