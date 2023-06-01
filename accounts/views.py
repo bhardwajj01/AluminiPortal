@@ -28,8 +28,8 @@ class LoginViewSet(ViewSet):
         password=request.data.get('password')
         # username,password = (base64.b64decode(username).decode("ascii"), base64.b64decode(password).decode("ascii"))
  
-        # username= base64.b64decode(username).decode("ascii") #'utf-8'
-        # password= base64.b64decode(password).decode("ascii") #'utf-8'
+        username= base64.b64decode(username).decode("ascii") #'utf-8'
+        password= base64.b64decode(password).decode("ascii") #'utf-8'
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -119,8 +119,8 @@ class TeacherViewSet(ViewSet):
             print(e)
             return Response({"status":False,"message":"User not found!"})
         
-        # username=request.data.get('username')
-        # password=request.data.get('password') 
+        username=request.data.get('username')
+        password=request.data.get('password') 
         data={
                 'username':username,
                 'password':password,
