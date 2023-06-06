@@ -2,6 +2,7 @@ from django.shortcuts import render
 from .models import *
 from rest_framework.response import Response
 from .serializers import *
+from .paginations import CustomPagination
 from rest_framework import filters
 from rest_framework.viewsets import ModelViewSet,ViewSet
 from django.contrib.auth.models import User
@@ -15,7 +16,7 @@ from django.core.mail import send_mail,EmailMessage
 import base64
 from django.conf import settings
 from rest_framework.exceptions import PermissionDenied
-
+from rest_framework.pagination import PageNumberPagination
 
 
 
@@ -185,6 +186,7 @@ class TeacherViewSet(ViewSet):
 class StudentViewSet(ViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
+    
 
     
     def create(self,request):
@@ -278,7 +280,7 @@ class ProfileUpdateViewSet(ViewSet):
     def retrieve(self, request,pk=1):
         try:
             teacherdata = Teacher.objects.get(user=request.user)
-            serializer = TeacherSerializer(teacherdata)
+            serializer = TeacherSerializer(teacherdata,context={"request":request})
             data = {
                 'status': True,
                 'data': serializer.data,
@@ -287,7 +289,7 @@ class ProfileUpdateViewSet(ViewSet):
         except Teacher.DoesNotExist:
             try:
                 studentdata = Student.objects.get(user=request.user)
-                serializer = StudentSerializer(studentdata)
+                serializer = StudentSerializer(studentdata,context={"request":request})
                 data = {
                     'status': True,
                     'data': serializer.data,
@@ -375,21 +377,26 @@ class SearchViewSet(ViewSet):
         # student_name=Student.objects.filter(name=name)
         # serializer=self.serializer_class(student_name,many=True)
         # return Response(serializer.data,status=status.HTTP_200_OK)
-    
+
+ 
+
 class CreateJobViewSet(ModelViewSet):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = []
+    permission_classes = []
+    # authentication_classes = [JWTAuthentication]
+    # permission_classes = [permissions.IsAuthenticated]
+    queryset = Job.objects.all()
+    pagination_class = CustomPagination
     serializer_class = JobSerializer
     queryset = Job.objects.all()
     filter_backends = [filters.SearchFilter]
     search_fields = ['title', 'description', 'company', 'location']
-
-    serializer_class=JobSerializer
     
     def list(self, request, *args, **kwargs):
         queryset=Job.objects.all() 
+        queryset=self.paginate_queryset(queryset)
         queryset=self.filter_queryset(queryset)
-        serializers=JobSerializer(queryset,many=True)
+        serializers=JobSerializer(queryset,many=True,context={"request":request})
         data=serializers.data
         data={
             'status':True,
@@ -405,8 +412,10 @@ class CreateJobViewSet(ModelViewSet):
  
         user_id=request.user.id
         data['created_by']=user_id
+        print(data)
 
         serializer=JobSerializer(data=data)
+        print(serializer)
 
         if serializer.is_valid():
             serializer.save()
@@ -424,28 +433,6 @@ class CreateJobViewSet(ModelViewSet):
             }
             return Response(data)
 
- 
-
-# class SearchJobViewSet(ModelViewSet): 
-#     authentication_classes = []
-#     permission_classes = []
-#     queryset = Job.objects.all()
-#     serializer_class = JobSerializer
-#     filter_backends = [filters.SearchFilter]
-#     search_fields = ['title', 'description', 'company', 'location']
-
-#     def list(self, request, *args, **kwargs):
-#         queryset=Job.objects.all() 
-#         queryset=self.filter_queryset(queryset)
-#         serializers=JobSerializer(queryset,many=True)
-#         # serializers=self.get_serializer(queryset,many=True)
-#         data=serializers.data
-#         data={
-#             'status':True,
-#             'data':data,
-#         }
-#         return Response(data)
-
 
 class GalleryViewSet(ModelViewSet):
     authentication_classes = []
@@ -454,34 +441,41 @@ class GalleryViewSet(ModelViewSet):
     serializer_class = GallerySerializer
 
 class EventViewSet(ModelViewSet):
+    
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = CustomPagination
+
     queryset = Event.objects.all()
     serializer_class = EventSerializer
     def create(self, request):
-        data=request.data.copy()
-        new_data={}
-        for key,value in data.items():
-            new_data[key]=value
-        user_id=request.user.id
-        teacher = Teacher.objects.get(id=user_id) 
-        data['created_by']=teacher
-        serializer=EventSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            data = {
-                'status': True,
-                'data': serializer.data,
-                'created_by': request.user.username,
-                'message': 'Event created successfully'
-            }
-            return Response(data)
-        else:
+        data = request.data.copy()
+        try:
+            teacher = Teacher.objects.get(user_id=request.user.id)
+            data['created_by'] = teacher.id
+            serializer = EventSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                data = {
+                    'status': True,
+                    'data': serializer.data,
+                    'created_by': teacher.user.username,
+                    'message': 'Event created successfully'
+                }
+                return Response(data)
+            else:
+                data = {
+                    'status': False,
+                    'message': 'Invalid data',
+                    'errors': serializer.errors
+                }
+                return Response(data)
+        except Teacher.DoesNotExist:
             data = {
                 'status': False,
-                'message': 'You are not authorized to access this resource',
+                'message': 'Teacher not found',
             }
-            return Response(data)
+            return Response(data)    
 
         
 class ChatViewSet(ModelViewSet):

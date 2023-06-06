@@ -98,7 +98,7 @@ class GallerySerializer(serializers.ModelSerializer):
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
-        fields = ['id', 'created_by', 'title', 'description', 'category', 'start_time', 'end_time', 'location', 'posted_date']
+        fields = ['id',"created_by", 'title', 'description', 'category', 'start_time', 'end_time', 'location',]
 
 
 
