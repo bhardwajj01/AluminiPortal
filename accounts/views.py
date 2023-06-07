@@ -16,8 +16,7 @@ from django.core.mail import send_mail,EmailMessage
 import base64
 from django.conf import settings
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.pagination import PageNumberPagination
-
+# from django.db import transaction
 
 
 class LoginViewSet(ViewSet):
@@ -29,8 +28,8 @@ class LoginViewSet(ViewSet):
         password=request.data.get('password')
         # username,password = (base64.b64decode(username).decode("ascii"), base64.b64decode(password).decode("ascii"))
  
-        # username= base64.b64decode(username).decode("ascii") #'utf-8'
-        # password= base64.b64decode(password).decode("ascii") #'utf-8'
+        username= base64.b64decode(username).decode("ascii") #'utf-8'
+        password= base64.b64decode(password).decode("ascii") #'utf-8'
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -107,10 +106,14 @@ class ResetPasswordEmailViewSet(ViewSet):
             }
         return Response(data)
 
-# from django.db import transaction
+
 class TeacherViewSet(ViewSet):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAdminUser]                                                                                            
+    permission_classes = [IsAdminUser]
+    pagination_class = CustomPagination 
+    queryset = Teacher.objects.all()
+    serializer_class = TeacherSerializer
+                                                                                               
     def create(self,request):
         user_id=request.user.id
         print(user_id)
@@ -169,10 +172,14 @@ class TeacherViewSet(ViewSet):
 
                 }
                 return Response(data)
-
+            
     def list(self, request):
-        teachers = Teacher.objects.all()
-        serializer = TeacherSerializer(teachers, many=True)
+        # queryset = self.queryset
+        # paginator = self.pagination_class()
+        # paginated_queryset = paginator.paginate_queryset(queryset, request)
+        students = Teacher.objects.all()
+        serializer = TeacherSerializer(students, many=True)
+        # serializer = self.serializer_class(paginated_queryset, many=True, context={"request": request})
         data = {
             'data': serializer.data,
             'status': True,
@@ -184,7 +191,9 @@ class StudentViewSet(ViewSet):
 
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
-    # pagination_class = CustomPagination
+    pagination_class = CustomPagination
+    queryset = Student.objects.all()
+    serializer_class = StudentSerializer
 
     
     def create(self,request):
@@ -254,17 +263,24 @@ class StudentViewSet(ViewSet):
             
     def list(self, request):
         user_id=request.user.id
+        # paginator = self.pagination_class()  
         if request.user.is_staff:  
+            # students = self.queryset
+            # page = paginator.paginate_queryset(students, request)
             students = Student.objects.all()
             serializer = StudentSerializer(students, many=True)
+            # serializer = StudentSerializer(page, many=True,context={"request": request})
             data = {
                 'status': True,
                 'data': serializer.data,                
              }
             return Response(data)
         elif Teacher.objects.filter(user=user_id):
+            # students = self.queryset
+            # page = paginator.paginate_queryset(students, request)
             students = Student.objects.all()
             serializer = StudentSerializer(students, many=True)
+            # serializer = StudentSerializer(page, many=True,context={"request": request})
             data = {
                 'status': True,
                 'data': serializer.data,                
@@ -369,16 +385,32 @@ class ProfileUpdateViewSet(ViewSet):
 class SearchViewSet(ViewSet): 
     authentication_classes = []
     permission_classes = []
+    pagination_class=CustomPagination
     serializer_class=StudentSerializer
     queryset=Student.objects.all()
     filter_backends = [filters.SearchFilter]
     search_fields=['name']
-
+    
+    # def list(self, request):
+        # name = self.request.query_params.get('name')
+        # queryset = Student.objects.filter(name=name)
+        # paginator = self.pagination_class()
+        # page = paginator.paginate_queryset(queryset, request)
+        # serializer = self.serializer_class(page, many=True, context={"request": request})
+        # data={
+        #     'status':True,
+        #     'data':serializer.data
+        # }
+        # return Response(data)
     def list(self, request):
         name = self.request.query_params.get('name')
         queryset = Student.objects.filter(name=name)
-        serializer=self.serializer_class(queryset,many=True)
-        return Response(serializer.data)
+        serializer=self.serializer_class(queryset,many=True,context={"request":request})
+        data={
+            'status':True,
+            'data':serializer.data
+        }
+        return Response(data)
         # name=request.data.get("name")
         # student_name=Student.objects.filter(name=name)
         # serializer=self.serializer_class(student_name,many=True)
@@ -387,45 +419,25 @@ class SearchViewSet(ViewSet):
  
 
 class CreateJobViewSet(ModelViewSet):
-    authentication_classes = []
-    permission_classes = []
-    # authentication_classes = [JWTAuthentication]
-    # permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
     queryset = Job.objects.all()
-    pagination_class=PageNumberPagination
-    pagination_class.page_size = 10
-    # pagination_class = CustomPagination
+    pagination_class = CustomPagination
     serializer_class = JobSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['title', 'description', 'company', 'location']
     
     def list(self, request):
         queryset = Job.objects.all()
-        # queryset=self.filter_queryset(queryset)
-        paginator = self.pagination_class()
-        paginated_queryset = paginator.paginate_queryset(queryset, request)
-        serializer = JobSerializer(paginated_queryset, many=True)
-        # return paginator.get_paginated_response(serializer.data)
-        data=serializer.data
+        # queryset=self.paginate_queryset(queryset)
+        queryset=self.filter_queryset(queryset)
+        serializers=self.get_serializer(queryset,many=True,context={"request":request})
+        data=serializers.data
         data={
             'status':True,
             'data':data,
         }
         return Response(data)
-    
-    # def list(self, request):
-    #     queryset = Job.objects.all()
-    #     queryset=self.paginate_queryset(queryset)
-    #     queryset=self.filter_queryset(queryset)
-    #     # serializers=JobSerializer(queryset,many=True)
-    #     serializers=self.get_serializer(queryset,many=True,context={"request":request})
-    #     # # serializers=JobSerializer(queryset,many=True,context={"request":request})
-    #     data=serializers.data
-    #     data={
-    #         'status':True,
-    #         'data':data,
-    #     }
-    #     return Response(data)
     
     def create(self, request):
         data=request.data.copy()
@@ -463,16 +475,50 @@ class GalleryViewSet(ModelViewSet):
     queryset = Gallery.objects.all()
     serializer_class = GallerySerializer
 
-class EventViewSet(ModelViewSet):
-    authentication_classes = []
-    permission_classes = []
-    # authentication_classes = [JWTAuthentication]
-    # permission_classes = [permissions.IsAuthenticated]
-    # pagination_class = CustomPagination
-    
+    def create(self, request):
+        user_id=request.user.id
+        data['posted_by']=user_id
+        serializer=GallerySerializer(data=data)
+        print(serializer)
 
+        if serializer.is_valid():
+            serializer.save()
+            data = {
+                'status': True,
+                'data': serializer.data,
+                'created_by': request.user.username,
+                'message': 'Job created successfully'
+            }
+            return Response(data)
+        else:
+            data = {
+                'status': False,
+                'message': 'Job not created',
+            }
+            return Response(data)
+
+
+class EventViewSet(ModelViewSet):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = CustomPagination
     queryset = Event.objects.all()
     serializer_class = EventSerializer
+
+    
+    def list(self, request):
+        queryset = Event.objects.all()
+        # queryset=self.paginate_queryset(queryset)
+        queryset=self.filter_queryset(queryset)
+        # serializers=JobSerializer(queryset,many=True)
+        serializers=self.get_serializer(queryset,many=True,context={"request":request})
+        # serializers=JobSerializer(queryset,many=True,context={"request":request})
+        data={
+            'status':True,
+            'data':serializers.data  
+        }
+        return Response(data)
+    
     def create(self, request):
         data = request.data.copy()
         try:

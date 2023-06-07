@@ -93,7 +93,7 @@ class GallerySerializer(serializers.ModelSerializer):
     # posted_by = UserSerializer(read_only=True)
     class Meta:
         model = Gallery
-        fields = ['id', 'posted_by', 'image'] 
+        fields = ['id','posted_by','image'] 
          
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
