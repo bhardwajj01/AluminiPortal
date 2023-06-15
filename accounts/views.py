@@ -28,8 +28,8 @@ class LoginViewSet(ViewSet):
         password=request.data.get('password')
         # username,password = (base64.b64decode(username).decode("ascii"), base64.b64decode(password).decode("ascii"))
  
-        username= base64.b64decode(username).decode("ascii") #'utf-8'
-        password= base64.b64decode(password).decode("ascii") #'utf-8'
+        # username= base64.b64decode(username).decode("ascii") #'utf-8'
+        # password= base64.b64decode(password).decode("ascii") #'utf-8'
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -422,7 +422,7 @@ class CreateJobViewSet(ModelViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     queryset = Job.objects.all()
-    pagination_class = CustomPagination
+    # pagination_class = CustomPagination
     serializer_class = JobSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['title', 'description', 'company', 'location']
@@ -465,6 +465,32 @@ class CreateJobViewSet(ModelViewSet):
             data = {
                 'status': False,
                 'message': 'Job not created',
+            }
+            return Response(data)
+      
+      #delete
+    def destroy(self, request, pk=None):
+        pk = int(pk)
+        if Teacher.objects.filter(user=request.user).exists():
+            try:
+                job = Job.objects.get(id=pk)
+                # job = Job.objects.filter(id=pk)
+                job.delete()
+                data = {
+                    'status': True,
+                    'message': 'Job deleted successfully',
+                }
+                return Response(data)
+            except Job.DoesNotExist:
+                data = {
+                    'status': False,
+                    'message': 'Job not found',
+                }
+                return Response(data)
+        else:
+            data = {
+                'status': False,
+                'message': 'You are not authorized to delete jobs.',
             }
             return Response(data)
 
