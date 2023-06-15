@@ -471,7 +471,7 @@ class CreateJobViewSet(ModelViewSet):
       #delete
     def destroy(self, request, pk=None):
         pk = int(pk)
-        if Teacher.objects.filter(user=request.user).exists():
+        if User.is_superuser or Teacher.objects.filter(user=request.user).exists():
             try:
                 job = Job.objects.get(id=pk)
                 # job = Job.objects.filter(id=pk)
@@ -544,7 +544,30 @@ class EventViewSet(ModelViewSet):
             'data':serializers.data  
         }
         return Response(data)
-    
+    def destroy(self, request, pk=None):
+        pk = int(pk)
+        if User.is_superuser or Teacher.objects.filter(user=request.user).exists():
+            try:
+                event = Event.objects.get(id=pk)
+                # job = Job.objects.filter(id=pk)
+                event.delete()
+                data = {
+                    'status': True,
+                    'message': 'Event deleted successfully',
+                }
+                return Response(data)
+            except Event.DoesNotExist:
+                data = {
+                    'status': False,
+                    'message': 'Event not found',
+                }
+                return Response(data)
+        else:
+            data = {
+                'status': False,
+                'message': 'You are not authorized to delete jobs.',
+            }
+            return Response(data)   
     def create(self, request):
         data = request.data.copy()
         try:
