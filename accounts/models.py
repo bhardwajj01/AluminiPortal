@@ -31,8 +31,8 @@ class Teacher(models.Model):
     linkedin=models.CharField(max_length=100,blank=True,null=True)
     facebook=models.CharField(max_length=100,blank=True,null=True)
     instagram=models.CharField(max_length=100,blank=True,null=True)
-    # experience = models.TextField(max_length=500, blank=True, null=True)
-    # education = models.TextField(max_length=500, blank=True, null=True)
+    experience = models.TextField(blank=True, null=True)
+    education = models.TextField(blank=True, null=True)
 
 
 
@@ -61,7 +61,7 @@ class Student(models.Model):
     linkedin=models.CharField(max_length=100,blank=True,null=True)
     facebook=models.CharField(max_length=100,blank=True,null=True)
     instagram=models.CharField(max_length=100,blank=True,null=True)
-    # education = models.TextField(max_length=500, blank=True, null=True)
+    education = models.TextField(max_length=500, blank=True, null=True)
 
 
 

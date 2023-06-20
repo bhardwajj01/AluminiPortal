@@ -16,7 +16,7 @@ from django.core.mail import send_mail,EmailMessage
 import base64
 from django.conf import settings
 from rest_framework.exceptions import PermissionDenied
-# from django.db import transaction
+from django.db import transaction
 
 
 class LoginViewSet(ViewSet):
@@ -140,29 +140,29 @@ class TeacherViewSet(ViewSet):
             return Response(data)
         else:
             try:
-                # with transaction.atomic():
-                user=User.objects.create_user(**data) 
-                print(user)
-                teacher=Teacher.objects.create(
-                    user=user,
-                    name=request.data.get('name'),
-                    role=request.data.get('role'),
-                    email=request.data.get('email'))
-                teacher.save()
-                print(teacher)
-                subject = 'Welcome to MySite!'
-                message = f'Hi \n this is your username: {user.username}, \n and your password is: {password}'
-                # Set the email sender and recipient
-                email_from = settings.EMAIL_HOST_USER
-                recipient_list = [teacher.email,]
-                # Send the email using Django's email sending library
-                send_mail(subject, message, email_from, recipient_list, fail_silently=False)
-                print(send_mail)
-                data={
-                    'status':True,
-                    'message':'Teacher created successfully'
-                }
-                return Response(data)
+                with transaction.atomic():
+                    user=User.objects.create_user(**data) 
+                    print(user)
+                    teacher=Teacher.objects.create(
+                        user=user,
+                        name=request.data.get('name'),
+                        role=request.data.get('role'),
+                        email=request.data.get('email'))
+                    teacher.save()
+                    print(teacher)
+                    subject = 'Welcome to MySite!'
+                    message = f'Hi \n this is your username: {user.username}, \n and your password is: {password}'
+                    # Set the email sender and recipient
+                    email_from = settings.EMAIL_HOST_USER
+                    recipient_list = [teacher.email,]
+                    # Send the email using Django's email sending library
+                    send_mail(subject, message, email_from, recipient_list, fail_silently=False)
+                    print(send_mail)
+                    data={
+                        'status':True,
+                        'message':'Teacher created successfully'
+                    }
+                    return Response(data)
             except Exception as e:
                 print(e)
                 data={
@@ -207,7 +207,7 @@ class StudentViewSet(ViewSet):
             print(e)
             return Response({"status":False,"message":"Teacher not found!"})
 
-        print(user_id)
+        
         username=request.data.get('username')
         password=request.data.get('password')
         data={
@@ -224,33 +224,31 @@ class StudentViewSet(ViewSet):
                 }
             return Response(data)
         else:
-            # print("user alredy exits")
-            user=User.objects.create_user(**data) 
-            user.save()
-            # print(user)
-
             try:
-                student =Student.objects.create(
-                    user=user,
-                    teacher=teacherObj,
-                    registeration_no=request.data.get('registeration_no'),
-                    name=request.data.get('name'),
-                    email=request.data.get('email'))
-                student.save()
-                subject = 'Welcome to MySite!'
-                message = f'Hi \nthis is your username: {user.username}, \nand your password is: {password}'
-                # Set the email sender and recipient
-                email_from = settings.EMAIL_HOST_USER
-                recipient_list = [student.email,]
-                # Send the email using Django's email sending library
-                send_mail(subject, message, email_from, recipient_list, fail_silently=False)
-                print(send_mail)
-                data={
-                    'status':True,
-                    'message':'Student created successfully'
-                }
-                print("Student created successfully")
-                return Response(data)
+                with transaction.atomic():
+                    user=User.objects.create_user(**data)
+                    print(user)
+                    student =Student.objects.create(
+                        user=user,
+                        teacher=teacherObj,
+                        registeration_no=request.data.get('registeration_no'),
+                        name=request.data.get('name'),
+                        email=request.data.get('email'))
+                    student.save()
+                    subject = 'Welcome to MySite!'
+                    message = f'Hi \nthis is your username: {user.username}, \nand your password is: {password}'
+                    # Set the email sender and recipient
+                    email_from = settings.EMAIL_HOST_USER
+                    recipient_list = [student.email,]
+                    # Send the email using Django's email sending library
+                    send_mail(subject, message, email_from, recipient_list, fail_silently=False)
+                    print(send_mail)
+                    data={
+                        'status':True,
+                        'message':'Student created successfully'
+                    }
+                    print("Student created successfully")
+                    return Response(data)
             except Exception as e:
             
                 data={
@@ -549,7 +547,7 @@ class EventViewSet(ModelViewSet):
         if User.is_superuser or Teacher.objects.filter(user=request.user).exists():
             try:
                 event = Event.objects.get(id=pk)
-                # job = Job.objects.filter(id=pk)
+                # event = Event.objects.filter(id=pk)
                 event.delete()
                 data = {
                     'status': True,
@@ -565,7 +563,7 @@ class EventViewSet(ModelViewSet):
         else:
             data = {
                 'status': False,
-                'message': 'You are not authorized to delete jobs.',
+                'message': 'You are not authorized to delete events.',
             }
             return Response(data)   
     def create(self, request):
