@@ -494,30 +494,35 @@ class CreateJobViewSet(ModelViewSet):
 
 
 class GalleryViewSet(ModelViewSet):
-    authentication_classes = []
-    permission_classes = []
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    # authentication_classes = []
+    # permission_classes = []
     queryset = Gallery.objects.all()
     serializer_class = GallerySerializer
-
+     
+        
     def create(self, request):
+        data=request.data.copy()
+        new_data={}
+        for key,value in data.items():
+            new_data[key]=value
         user_id=request.user.id
         data['posted_by']=user_id
         serializer=GallerySerializer(data=data)
-        print(serializer)
-
         if serializer.is_valid():
             serializer.save()
             data = {
                 'status': True,
                 'data': serializer.data,
-                'created_by': request.user.username,
-                'message': 'Job created successfully'
+                'posted_by': request.user.username,
+                'message': 'Image posted successfully'
             }
             return Response(data)
         else:
             data = {
                 'status': False,
-                'message': 'Job not created',
+                'message': 'Image not posted',
             }
             return Response(data)
 
@@ -525,7 +530,7 @@ class GalleryViewSet(ModelViewSet):
 class EventViewSet(ModelViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
-    pagination_class = CustomPagination
+    # pagination_class = CustomPagination
     queryset = Event.objects.all()
     serializer_class = EventSerializer
 
